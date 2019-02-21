@@ -107,14 +107,22 @@ export type OCType<T> = IDataAccessor<T> & DataWrapper<NonNullable<T>>;
  *   x.d.e('optional default value') === 'optional default value'
  *   (x as any).y.z.a.b.c.d.e.f.g.h.i.j.k() === undefined
  */
-export function oc<T>(data?: T): OCType<T> {
+export function oc<T>(data?: T, parentKey?: string | number | symbol): OCType<T> {
   return new Proxy(
     ((defaultValue?: Defined<T>) => (data == null ? defaultValue : data)) as OCType<T>,
     {
       get: (target, key) => {
+        if(key === "_err") {
+          return (((errorMsg?: string) => {
+            if(data == null) {
+              throw new Error(errorMsg || `${String(parentKey)} is not set`)
+            }
+            return data
+          }) as OCType<T>)
+        }
         const obj: any = target();
 
-        return oc(typeof obj === 'object' ? obj[key] : undefined);
+        return oc(typeof obj === 'object' ? obj[key] : undefined, key);
       },
     },
   );
