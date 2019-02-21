@@ -75,7 +75,7 @@ export type DataWrapper<T> = T extends any[]
   : IDataAccessor<T>;
 
 export interface ErrorCheck<T> {
-  _err: IDataAccessor<T>;
+  _err: (errMsg?: string) => NonNullable<T>;
 }
 
 /////////////////////////////////////

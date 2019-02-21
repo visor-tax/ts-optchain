@@ -47,7 +47,7 @@ export interface ArrayWrapper<T> {
  */
 export declare type DataWrapper<T> = T extends any[] ? ArrayWrapper<T[number]> : T extends object ? ObjectWrapper<T> : IDataAccessor<T>;
 export interface ErrorCheck<T> {
-    _err: IDataAccessor<T>;
+    _err: (errMsg?: string) => NonNullable<T>;
 }
 /**
  * An object that supports optional chaining
