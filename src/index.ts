@@ -70,7 +70,13 @@ export interface ArrayWrapper<T> {
  */
 export type DataWrapper<T> = T extends any[]
   ? ArrayWrapper<T[number]>
-  : T extends object ? ObjectWrapper<T> : IDataAccessor<T>;
+  : T extends object
+  ? ObjectWrapper<T>
+  : IDataAccessor<T>;
+
+export interface ErrorCheck<T> {
+  _err: IDataAccessor<T>;
+}
 
 /////////////////////////////////////
 //
@@ -81,7 +87,9 @@ export type DataWrapper<T> = T extends any[]
 /**
  * An object that supports optional chaining
  */
-export type OCType<T> = IDataAccessor<T> & DataWrapper<NonNullable<T>>;
+export type OCType<T> = IDataAccessor<T> &
+  DataWrapper<NonNullable<T>> &
+  ErrorCheck<T>;
 
 /**
  * Proxies access to the passed object to support optional chaining w/ default values.
@@ -107,23 +115,27 @@ export type OCType<T> = IDataAccessor<T> & DataWrapper<NonNullable<T>>;
  *   x.d.e('optional default value') === 'optional default value'
  *   (x as any).y.z.a.b.c.d.e.f.g.h.i.j.k() === undefined
  */
-export function oc<T>(data?: T, parentKey?: string | number | symbol): OCType<T> {
+export function oc<T>(
+  data?: T,
+  parentKey?: string | number | symbol
+): OCType<T> {
   return new Proxy(
-    ((defaultValue?: Defined<T>) => (data == null ? defaultValue : data)) as OCType<T>,
+    ((defaultValue?: Defined<T>) =>
+      data == null ? defaultValue : data) as OCType<T>,
     {
       get: (target, key) => {
-        if(key === "_err") {
-          return (((errorMsg?: string) => {
-            if(data == null) {
-              throw new Error(errorMsg || `${String(parentKey)} is not set`)
+        if (key === '_err') {
+          return ((errorMsg?: string) => {
+            if (data == null) {
+              throw new Error(errorMsg || `${String(parentKey)} is not set`);
             }
-            return data
-          }) as OCType<T>)
+            return data;
+          }) as OCType<T>;
         }
         const obj: any = target();
 
         return oc(typeof obj === 'object' ? obj[key] : undefined, key);
       },
-    },
+    }
   );
 }
